@@ -1,0 +1,29 @@
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# AI / Agents
+.agents/
+.codex/
+memoria.md
+skills-lock.json
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Builds
+dist/
+build/
+android/app/build/
+android/.gradle/
+.capacitor/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
