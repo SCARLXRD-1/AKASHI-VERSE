@@ -1,0 +1,56 @@
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+import TopBar from './components/TopBar'
+import Footer from './components/Footer'
+import Home from './pages/Home'
+
+const Catalog = lazy(() => import('./pages/Catalog'))
+const Search = lazy(() => import('./pages/Search'))
+const Detail = lazy(() => import('./pages/Detail'))
+const AnimeDetail = lazy(() => import('./pages/AnimeDetail'))
+const Watch = lazy(() => import('./pages/Watch'))
+const History = lazy(() => import('./pages/History'))
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
+function SuspenseRoute({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<div className="spinner" role="status" aria-label="Cargando" />}>{children}</Suspense>
+}
+
+function Layout() {
+  return (
+    <div className="app">
+      <TopBar />
+      <main className="main">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/peliculas" element={<SuspenseRoute><Catalog kind="peliculas" /></SuspenseRoute>} />
+          <Route path="/series" element={<SuspenseRoute><Catalog kind="series" /></SuspenseRoute>} />
+          <Route path="/anime" element={<SuspenseRoute><Catalog kind="anime" /></SuspenseRoute>} />
+          <Route path="/buscar" element={<SuspenseRoute><Search /></SuspenseRoute>} />
+          <Route path="/detalle" element={<SuspenseRoute><Detail /></SuspenseRoute>} />
+          <Route path="/anime-detalle" element={<SuspenseRoute><AnimeDetail /></SuspenseRoute>} />
+          <Route path="/ver" element={<SuspenseRoute><Watch /></SuspenseRoute>} />
+          <Route path="/historial" element={<SuspenseRoute><History /></SuspenseRoute>} />
+          <Route path="*" element={<Home />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <Layout />
+    </BrowserRouter>
+  )
+}
