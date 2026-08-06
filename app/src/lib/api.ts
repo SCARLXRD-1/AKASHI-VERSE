@@ -56,6 +56,8 @@ function normalizeAnimeItem(item: Record<string, unknown>): MediaItem | null {
     kind: 'anime',
     year: item.year ? String(item.year) : undefined,
     rating: item.rating ? String(item.rating) : undefined,
+    episodeUrl: (item.episodeUrl as string) || undefined,
+    episodeNumber: typeof item.episodeNumber === 'number' ? item.episodeNumber : undefined,
   }
 }
 

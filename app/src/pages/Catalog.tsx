@@ -83,7 +83,7 @@ export default function Catalog({ kind }: CatalogProps) {
       } else {
          if (isAnime) {
            const genreParam = selectedGenre || (animeType === 'anime' ? undefined : animeType)
-           results = await animeApi.catalog(page, genreParam, provider || (animeType === 'anime' ? 'animeflv' : 'jkanime')).catch(()=>[])
+           results = await animeApi.catalog(page, genreParam, provider || 'jkanime').catch(()=>[])
          } else {
            results = await peliApi.catalog({ type: typeParam, page, genre: selectedGenre || undefined }).catch(()=>[])
          }
@@ -98,7 +98,11 @@ export default function Catalog({ kind }: CatalogProps) {
     fetchContent()
       .then((r) => {
         const filtered = isAnime ? r.filter((item) => matchesAnimeCategory(item, animeType)) : r
-        if (mounted) setItems((prev) => (page === 1 ? filtered : [...prev, ...filtered]))
+        if (mounted) setItems((prev) => {
+          if (page === 1) return filtered
+          const newItems = filtered.filter(f => !prev.some(p => (p.url === f.url || p.title === f.title)))
+          return [...prev, ...newItems]
+        })
       })
       .finally(() => mounted && setLoading(false))
 
@@ -112,16 +116,20 @@ export default function Catalog({ kind }: CatalogProps) {
     const load = async () => {
       const genreParam = animeType === 'anime' ? undefined : animeType;
       const firstPage = isAnime 
-        ? animeApi.catalog(1, genreParam, provider || (animeType === 'anime' ? 'animeflv' : 'jkanime')) 
+        ? animeApi.catalog(1, genreParam, provider || 'jkanime') 
         : peliApi.catalog({ type: typeParam, page: 1 })
       const secondPage = isAnime 
-        ? animeApi.catalog(2, genreParam, provider || (animeType === 'anime' ? 'animeflv' : 'jkanime')) 
+        ? animeApi.catalog(2, genreParam, provider || 'jkanime') 
         : peliApi.catalog({ type: typeParam, page: 2 })
       const [recent, more] = await Promise.all([firstPage, secondPage])
       if (!mounted) return
       const filteredRecent = isAnime ? recent.filter((item) => matchesAnimeCategory(item, animeType)) : recent
       const filteredMore = isAnime ? more.filter((item) => matchesAnimeCategory(item, animeType)) : more
-      const pool = [...filteredRecent, ...filteredMore]
+      const poolMap = new Map()
+      for (const item of [...filteredRecent, ...filteredMore]) {
+        if (item.url && !poolMap.has(item.url)) poolMap.set(item.url, item)
+      }
+      const pool = Array.from(poolMap.values())
       setPremieres(filteredRecent.slice(0, 10))
       setTopTen(
         [...pool]
@@ -188,25 +196,25 @@ export default function Catalog({ kind }: CatalogProps) {
           </div>
 
           {isAnime && (
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
               <button 
-                className={`chip ${animeType === 'anime' ? 'active' : ''}`}
+                className={`btn ${animeType === 'anime' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setAnimeType('anime')}
-                style={{ background: animeType === 'anime' ? 'var(--c-accent)' : undefined, color: animeType === 'anime' ? '#fff' : undefined, cursor: 'pointer', border: 'none' }}
+                data-nav
               >
                 Animes
               </button>
               <button 
-                className={`chip ${animeType === 'donghua' ? 'active' : ''}`}
+                className={`btn ${animeType === 'donghua' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setAnimeType('donghua')}
-                style={{ background: animeType === 'donghua' ? 'var(--c-accent)' : undefined, color: animeType === 'donghua' ? '#fff' : undefined, cursor: 'pointer', border: 'none' }}
+                data-nav
               >
                 Donghuas
               </button>
               <button 
-                className={`chip ${animeType === 'ova' ? 'active' : ''}`}
+                className={`btn ${animeType === 'ova' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setAnimeType('ova')}
-                style={{ background: animeType === 'ova' ? 'var(--c-accent)' : undefined, color: animeType === 'ova' ? '#fff' : undefined, cursor: 'pointer', border: 'none' }}
+                data-nav
               >
                 OVAs
               </button>

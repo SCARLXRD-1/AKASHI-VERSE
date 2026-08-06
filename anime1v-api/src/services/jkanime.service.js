@@ -799,52 +799,62 @@ async function getEpisodeLinks(urlCandidate, includeMegaRaw, excludeServersRaw) 
 // Fetch catalog by parsing the homepage recent animes
 async function getCatalog(page = 1, genre = "") {
   try {
-    const html = await fetchHtml("https://jkanime.net/");
-    const $ = cheerio.load(html);
-    const results = [];
-    const seen = new Set();
+    const pageNum = Number(page) || 1;
+    let html;
+    let results = [];
     
-    $("a").each((i, el) => {
-      const href = $(el).attr("href");
-      if (href && href.startsWith("https://jkanime.net/") && href.split("/").length > 4) {
-        // Example: https://jkanime.net/sora-wa-akai-kawa-no-hotori/5/
-        const match = href.match(/^https:\/\/jkanime\.net\/([^\/]+)\/\d+\/?$/);
-        if (match && match[1]) {
-          const slug = match[1];
-          if (!seen.has(slug)) {
-            seen.add(slug);
-            const titleElement = $(el).find("h5").first();
-            const title = titleElement.length ? titleElement.text().trim() : slug.replace(/-/g, ' ');
+    // Page 1 gets recent updates from home, Page > 1 gets the directory
+    if (pageNum === 1 && !genre) {
+      html = await fetchHtml("https://jkanime.net/");
+      const $ = cheerio.load(html);
+      const seen = new Set();
+      
+      $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        if (href && href.startsWith("https://jkanime.net/") && href.split("/").length > 4) {
+          const match = href.match(/^https:\/\/jkanime\.net\/([^\/]+)\/(\d+)\/?$/);
+          if (match && match[1]) {
+            const slug = match[1];
+            const ep = match[2];
+            if (!seen.has(slug)) {
+              seen.add(slug);
+              const titleElement = $(el).find("h5").first();
+              const title = titleElement.length ? titleElement.text().trim() : slug.replace(/-/g, ' ');
 
-            const lowerTitle = title.toLowerCase();
-            const lowerSlug = slug.toLowerCase();
-            // Excluir versiones latino o castellano
-            if (
-              !lowerTitle.includes('latino') && 
-              !lowerTitle.includes('castellano') && 
-              !lowerSlug.includes('-latino') && 
-              !lowerSlug.includes('-audio-latino') &&
-              !lowerSlug.includes('-castellano')
-            ) {
-              const image = `https://cdn.jkdesa.com/assets/images/animes/image/${slug}.jpg`;
-              
-              results.push({
-                id: slug,
-                title: title || slug,
-                image: image || "",
-                url: `https://jkanime.net/${slug}/`,
-                type: "Anime",
-              });
+              const lowerTitle = title.toLowerCase();
+              const lowerSlug = slug.toLowerCase();
+              if (
+                !lowerTitle.includes('latino') && 
+                !lowerTitle.includes('castellano') && 
+                !lowerSlug.includes('-latino') && 
+                !lowerSlug.includes('-castellano')
+              ) {
+                const image = `https://cdn.jkdesa.com/assets/images/animes/image/${slug}.jpg`;
+                results.push({
+                  id: slug,
+                  title: title || slug,
+                  image: image || "",
+                  url: `https://jkanime.net/${slug}/`,
+                  episodeUrl: href,
+                  episodeNumber: Number(ep),
+                  type: "Anime",
+                });
+              }
             }
           }
         }
-      }
-    });
+      });
+    } else {
+      // Pages 2+ or genre queries use the directory
+      const targetUrl = genre ? `https://jkanime.net/directorio/${pageNum}/?genero=${genre}` : `https://jkanime.net/directorio/${pageNum}/`;
+      html = await fetchHtml(targetUrl);
+      results = parseSearchResultsFromHtml(html, "jkanime.net");
+    }
 
     return {
       success: true,
       data: {
-        page: Number(page),
+        page: pageNum,
         results: results,
         count: results.length,
       },

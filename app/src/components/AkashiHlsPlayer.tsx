@@ -73,27 +73,40 @@ export default function AkashiHlsPlayer({
       hls.loadSource(src)
       hls.attachMedia(video)
 
-      let recoverAttempts = 0
+      let mediaRecoverAttempts = 0
+      let networkRecoverAttempts = 0
+      
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) {
-          console.error('[HLS] Fatal error:', data)
+          console.warn('[HLS] Fatal error:', data)
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              hls?.startLoad()
+              if (networkRecoverAttempts < 2) {
+                console.warn('[HLS] Fatal Network Error, retrying load...')
+                hls?.startLoad()
+                networkRecoverAttempts++
+              } else {
+                console.warn('[HLS] Network error unrecoverable, triggering fallback.')
+                setTimeout(() => {
+                  if (onFatal) onFatal()
+                }, 0)
+              }
               break
             case Hls.ErrorTypes.MEDIA_ERROR:
-              if (recoverAttempts === 0) {
+              if (mediaRecoverAttempts === 0) {
                 console.warn('[HLS] Fatal Media Error, attempting recovery...')
                 hls?.recoverMediaError()
-              } else if (recoverAttempts === 1) {
+              } else if (mediaRecoverAttempts === 1) {
                 console.warn('[HLS] Fatal Media Error again, swapping audio codec...')
                 hls?.swapAudioCodec()
                 hls?.recoverMediaError()
               } else {
-                console.error('[HLS] Could not recover media error, triggering fallback.')
-                if (onFatal) onFatal()
+                console.warn('[HLS] Could not recover media error, triggering fallback.')
+                setTimeout(() => {
+                  if (onFatal) onFatal()
+                }, 0)
               }
-              recoverAttempts++
+              mediaRecoverAttempts++
               break
             default:
               if (onFatal) onFatal()
@@ -256,6 +269,10 @@ export default function AkashiHlsPlayer({
         onPause={() => setIsPlaying(false)}
         onEnded={() => {
           if (onEnded) onEnded()
+        }}
+        onError={(e) => {
+          console.error('[HLS/Native] Video element error:', e.currentTarget.error)
+          if (onFatal) onFatal()
         }}
       />
 

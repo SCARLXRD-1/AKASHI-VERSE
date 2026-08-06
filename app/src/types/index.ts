@@ -11,6 +11,8 @@ export interface MediaItem {
   rating?: string
   provider: string
   kind: MediaKind
+  episodeUrl?: string
+  episodeNumber?: number
 }
 
 export interface HistoryEntry {

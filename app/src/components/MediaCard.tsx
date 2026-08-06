@@ -20,6 +20,18 @@ function imgSrc(item: MediaItem): string | undefined {
 
 function navigateTo(item: MediaItem, season?: number): void {
   if (item.kind === 'anime') {
+    if (item.episodeUrl) {
+      const qs = new URLSearchParams({ 
+        kind: 'anime', 
+        animeUrl: item.url || item.slug || '', 
+        url: item.episodeUrl 
+      })
+      if (item.image) qs.set('poster', item.image)
+      if (item.title) qs.set('titulo', item.title)
+      window.location.assign(`/ver?${qs.toString()}`)
+      return
+    }
+
     const url = item.url || item.slug
     if (url) {
       const qs = new URLSearchParams({ url })
@@ -134,9 +146,9 @@ export default function MediaCard({ item }: { item: MediaItem }) {
       </div>
       <div className="card-info">
         <div className="card-title">{item.title}</div>
-        {(item.year) && (
+        {(item.year || item.episodeNumber) && (
           <div className="card-sub">
-            {item.year}
+            {item.episodeNumber ? `Episodio ${item.episodeNumber}` : item.year}
           </div>
         )}
       </div>

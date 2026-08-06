@@ -18,7 +18,7 @@
   --accent: #d4af37;
   --accent-rgb: 212, 175, 55;
   --accent-hover: #b8860b;
-  --on-accent: var(--on-accent);
+  --on-accent: #ffffff;
   --accent-soft: #ebd08c;
   --accent-2: #b8860b;
   --focus: #d4af37;
@@ -290,6 +290,7 @@ img {
   align-items: center;
   gap: 12px;
   padding: 12px clamp(12px, 4vw, 48px);
+  padding-top: calc(12px + env(safe-area-inset-top));
   background: linear-gradient(to bottom, rgba(251, 243, 208, 0.92), rgba(251, 243, 208, 0.6) 70%, transparent);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);

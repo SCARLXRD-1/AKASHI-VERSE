@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
 import { useSpatialNav } from '../hooks/useSpatialNav'
 
 export default function TopBar() {
@@ -57,7 +58,7 @@ export default function TopBar() {
     }
   }, [])
 
-  const isNativeApp = typeof window !== 'undefined' && !!(window as any).Capacitor
+  const isNativeApp = typeof window !== 'undefined' && Capacitor.isNativePlatform()
 
   const navLinks = [
     { to: '/', label: 'Inicio' },
@@ -67,6 +68,10 @@ export default function TopBar() {
     { to: '/tv', label: 'TV en vivo' },
     { to: '/historial', label: 'Historial' },
   ]
+
+  if (!isNativeApp) {
+    navLinks.push({ to: '/apps', label: 'Descargar App' })
+  }
 
   return (
     <header className="topbar">
@@ -96,7 +101,7 @@ export default function TopBar() {
       <div className="topbar-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center', justifySelf: 'end' }}>
         {/* Descargar App Button - solo visible en web, no en app nativa */}
         {!isNativeApp && (
-          <button className="btn btn-outline" style={{ padding: '8px 14px', fontSize: '0.9rem' }}>
+          <NavLink to="/apps" className="btn btn-outline" style={{ padding: '8px 14px', fontSize: '0.9rem', textDecoration: 'none' }}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -113,7 +118,7 @@ export default function TopBar() {
               <line x1="12" y1="15" x2="12" y2="3"></line>
             </svg>
             <span className="hide-mobile">Descargar App</span>
-          </button>
+          </NavLink>
         )}
 
         {/* Theme toggle */}

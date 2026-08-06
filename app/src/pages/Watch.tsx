@@ -97,6 +97,7 @@ export default function Watch() {
   const [streamInfo, setStreamInfo] = useState<StreamInfo | null>(null)
   const [resolving, setResolving] = useState(false)
   const [resolveError, setResolveError] = useState<string | null>(null)
+  const [isIframeFallback, setIsIframeFallback] = useState(false)
 
   const [serverOptions, setServerOptions] = useState<Array<{ name?: string; language?: string; quality?: string; embedUrl?: string; server?: string; url?: string }>>([])
   
@@ -186,7 +187,21 @@ export default function Watch() {
         
         // CASCADE A PELIAPI
         console.log('[WATCH] Anime1v failed or exhausted, cascading to peliApi by title...')
-        const rawServers = extractServerList(await peliApi.servers(title, season, episode, title))
+        
+        let fallbackTitle = title;
+        let fallbackSeason = season;
+        
+        const seasonMatch = title.match(/(?:\s|-)*(?:(\d+)(?:st|nd|rd|th)?\s+Season|Season\s+(\d+))/i);
+        if (seasonMatch) {
+            const parsedSeason = Number(seasonMatch[1] || seasonMatch[2]);
+            if (parsedSeason && !Number.isNaN(parsedSeason)) {
+                fallbackSeason = parsedSeason;
+                fallbackTitle = title.replace(seasonMatch[0], '').trim();
+                console.log(`[WATCH] Parsed season ${fallbackSeason} from title. New search: ${fallbackTitle}`);
+            }
+        }
+
+        const rawServers = extractServerList(await peliApi.servers(fallbackTitle, fallbackSeason, episode, fallbackTitle))
         
         // Para Animes no eliminamos el Latino, simplemente los mostramos como secundarios
         const servers = sortByLanguage(rawServers, kind, preferredLang)
@@ -216,6 +231,7 @@ export default function Watch() {
     setResolving(true)
     setResolveError(null)
     setStreamInfo(null)
+    setIsIframeFallback(false)
 
     try {
       if (s.embedUrl) {
@@ -264,10 +280,19 @@ export default function Watch() {
          }
       }
 
-      setResolveError('El proveedor bloqueó la extracción de este servidor.')
+      if (s.embedUrl) {
+        console.log('[WATCH] Bloqueo de proveedor, activando Iframe Fallback...')
+        setIsIframeFallback(true)
+      } else {
+        setResolveError('El proveedor bloqueó la extracción de este servidor.')
+      }
     } catch (err) {
       console.error('resolveSelectedServer error', err)
-      setResolveError('Ocurrió un error al intentar extraer el video.')
+      if (s.embedUrl) {
+        setIsIframeFallback(true)
+      } else {
+        setResolveError('Ocurrió un error al intentar extraer el video.')
+      }
     } finally {
       setResolving(false)
     }
@@ -381,16 +406,22 @@ export default function Watch() {
     }
   }, [kind, animeUrl, animeEpisodeUrl, slug, season, episode, title, poster])
 
-  // Playback failure: intenta el siguiente servidor automáticamente.
+  // Playback failure: fallback a iframe o intenta el siguiente servidor.
   const handlePlaybackFailure = useCallback(() => {
-    const nextIdx = serverIndex + 1
-    if (nextIdx < serverOptions.length) {
-      console.log(`[WATCH] onFatal → auto-switching to server ${nextIdx}`)
-      setServerIndex(nextIdx)
+    const s = serverOptions[serverIndex]
+    if (s?.embedUrl && !isIframeFallback) {
+      console.log(`[WATCH] onFatal → fallback a iframe para el servidor actual`)
+      setIsIframeFallback(true)
     } else {
-      setError('No se pudo reproducir con ningún servidor disponible. Puedes intentar recargar la página.')
+      const nextIdx = serverIndex + 1
+      if (nextIdx < serverOptions.length) {
+        console.log(`[WATCH] onFatal → auto-switching to server ${nextIdx}`)
+        setServerIndex(nextIdx)
+      } else {
+        setError('No se pudo reproducir con ningún servidor disponible. Puedes intentar recargar la página.')
+      }
     }
-  }, [serverIndex, serverOptions.length])
+  }, [serverIndex, serverOptions, isIframeFallback])
 
   const autoTriggered = useRef(false)
   useEffect(() => {
@@ -442,6 +473,35 @@ export default function Watch() {
     },
     [watchId, kind, title, poster, serverOptions, serverIndex, episode, season, nextUrl, save, trigger],
   )
+
+  // Efecto para guardar el historial cuando se usa Iframe Fallback
+  useEffect(() => {
+    if (isIframeFallback && !didSave.current) {
+      // Guardamos en el historial después de 15 segundos para asegurar que lo está viendo
+      const timer = setTimeout(() => {
+        didSave.current = true
+        const entry: HistoryEntry = {
+          id: watchId,
+          kind: kind as HistoryEntry['kind'],
+          title,
+          poster,
+          provider: serverOptions[serverIndex]?.server || serverOptions[serverIndex]?.name || 'akashi',
+          episode: kind !== 'movie' ? `E${episode}` : undefined,
+          season,
+          episodeNumber: kind !== 'movie' ? episode : undefined,
+          progress: 0, // Al ser iframe no sabemos el progreso real
+          duration: 1, // Evita errores matematicos
+          timestamp: Date.now(),
+          watchUrl: window.location.search,
+          nextUrl: nextUrl || undefined,
+        }
+        save(entry)
+        console.log('[WATCH] Historial guardado por Iframe Fallback')
+      }, 15000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [isIframeFallback, watchId, kind, title, poster, serverOptions, serverIndex, episode, season, nextUrl, save])
 
   const onEnded = useCallback(() => {
     if (nextUrl && !autoTriggered.current) trigger()
@@ -540,44 +600,62 @@ export default function Watch() {
                 <span className="loader" style={{ marginBottom: 16 }}></span>
                 <p>Extrayendo video sin anuncios...</p>
               </div>
+            ) : isIframeFallback && serverOptions[serverIndex]?.embedUrl ? (
+              <div style={{ width: '100%', height: '100%', minHeight: 400, backgroundColor: '#000', display: 'flex', flexDirection: 'column' }}>
+                <iframe
+                  src={serverOptions[serverIndex].embedUrl}
+                  style={{ width: '100%', flex: 1, border: 'none' }}
+                  allowFullScreen
+                  title={title}
+                />
+                {nextUrl && (
+                  <div style={{ background: 'var(--surface)', padding: '12px', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>¿Terminaste el episodio?</span>
+                    <button className="btn btn-primary" onClick={goNext}>
+                      Siguiente Episodio ▶
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : resolveError ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 400, backgroundColor: '#000', color: 'var(--danger)' }}>
                 <p>{resolveError}</p>
                 <p style={{ fontSize: '0.9rem', color: 'var(--muted)', marginTop: 8 }}>Intenta seleccionando otro servidor abajo.</p>
               </div>
             ) : (
-              <>
+              <div style={{ width: '100%', height: '100%' }}>
                 <VideoPlayer
-                src={streamInfo?.src || ''}
-                referer={streamInfo?.referer}
-                poster={posterSrc}
-                startAt={startAt}
-                onProgress={onProgress}
-                onEnded={onEnded}
-                onFatal={handlePlaybackFailure}
-                />
-                {remaining !== null && (
-                <div className="autoplay-card">
-                  <div className="next-meta">
-                    {posterSrc && <img className="next-poster" src={posterSrc} alt="" loading="lazy" />}
-                    <div>
-                      <h4>Siguiente episodio</h4>
-                      <p>
-                        Reproduciendo en <span className="autoplay-count">{remaining}s</span>
-                      </p>
+                  src={streamInfo?.src || ''}
+                  referer={streamInfo?.referer}
+                  poster={posterSrc}
+                  startAt={startAt}
+                  onProgress={onProgress}
+                  onEnded={onEnded}
+                  onFatal={handlePlaybackFailure}
+                >
+                  {remaining !== null && (
+                  <div className="autoplay-card">
+                    <div className="next-meta">
+                      {posterSrc && <img className="next-poster" src={posterSrc} alt="" loading="lazy" />}
+                      <div>
+                        <h4>Siguiente episodio</h4>
+                        <p>
+                          Reproduciendo en <span className="autoplay-count">{remaining}s</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button className="btn btn-primary" data-nav onClick={playNext} style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
+                        ▶ Reproducir
+                      </button>
+                      <button className="btn btn-ghost" data-nav onClick={cancel} style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
+                        Cancelar
+                      </button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <button className="btn btn-primary" data-nav onClick={playNext} style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
-                      ▶ Reproducir
-                    </button>
-                    <button className="btn btn-ghost" data-nav onClick={cancel} style={{ padding: '8px 18px', fontSize: '0.85rem' }}>
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-                )}
-              </>
+                  )}
+                </VideoPlayer>
+              </div>
             )}
           </div>
 
@@ -656,7 +734,7 @@ export default function Watch() {
                     onClick={() => { if (!isActive) window.location.assign(`/ver?${qs.toString()}`) }}
                   >
                     <span style={{ fontWeight: isActive ? 700 : 500 }}>Episodio {epNum}</span>
-                    {ep.title && <small style={isActive ? { color: 'var(--on-accent)', opacity: 0.8 } : {}}>{ep.title}</small>}
+                    {ep.title && ep.title !== `Episodio ${epNum}` && <small style={isActive ? { color: 'var(--on-accent)', opacity: 0.8 } : {}}>{ep.title}</small>}
                   </button>
                 )
               })}
@@ -715,7 +793,7 @@ export default function Watch() {
                     onClick={() => { if (!isActive) window.location.assign(`/ver?${qs.toString()}`) }}
                   >
                     <span style={{ fontWeight: isActive ? 700 : 500 }}>Episodio {epObj.number}</span>
-                    {epObj.title && <small style={isActive ? { color: 'var(--on-accent)', opacity: 0.8 } : {}}>{epObj.title}</small>}
+                    {epObj.title && epObj.title !== `Episodio ${epObj.number}` && <small style={isActive ? { color: 'var(--on-accent)', opacity: 0.8 } : {}}>{epObj.title}</small>}
                   </button>
                 )
               })}
