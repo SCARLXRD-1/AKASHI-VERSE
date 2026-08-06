@@ -13,7 +13,7 @@ export default function Apps() {
   return (
     <div ref={ref} className="main" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'radial-gradient(circle at top, rgba(var(--accent-rgb), 0.15), transparent 60%)' }}>
       
-      <div className="hero rise" style={{ textAlign: 'center', maxWidth: 900, marginBottom: 60 }}>
+      <div className="rise" style={{ textAlign: 'center', maxWidth: 900, marginBottom: 60, marginTop: 40 }}>
         <span className="kicker" style={{ background: 'rgba(var(--accent-rgb), 0.2)', color: 'var(--accent)', padding: '6px 16px', borderRadius: 999, fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 }}>
           Aplicaciones Nativas
         </span>
