@@ -54,3 +54,11 @@ El nuevo proveedor **Unlimplay** ha sido integrado a `peliapi`.
 - Se requiere el parámetro `tmdbId` en las peticiones `/servers` para que Unlimplay pueda ejecutarse.
 - Si `/api/v1/content/servers?tmdbId=12345` es ejecutado, la API intentará usar Unlimplay primero y, si falla, hará un "cascade" (búsqueda en cascada) por el resto de los proveedores.
 - Al usar IDs numéricos en el frontend, puedes pasarlos directamente en tus llamadas y evitar depender excesivamente del scraping.
+
+## TV en Vivo (Placeholder)
+- Se preparó la base para la sección de **TV en Vivo** (`/tv`), pero actualmente se encuentra en modo "Próximamente" debido a ajustes de diseño pendientes.
+- La ruta fue agregada al enrutador (`App.tsx`) y a la navegación superior (`TopBar.tsx`).
+
+## Detección de App Nativa (Capacitor)
+- En el componente `TopBar.tsx`, se añadió la constante `isNativeApp` que verifica la existencia de `window.Capacitor`.
+- Si el usuario navega desde la app nativa (APK/Android/TV), el botón "Descargar App" se ocultará automáticamente.
