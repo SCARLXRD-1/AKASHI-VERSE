@@ -14,8 +14,44 @@ const PROVIDERS = [
   {
     id: "jkanime",
     label: "JKAnime",
-    domains: [DEFAULT_ANIME_DOMAIN, "jkanime.net", "www.jkanime.net"],
+    domains: ["jkanime.net", "www.jkanime.net", DEFAULT_ANIME_DOMAIN],
     service: jkanimeService,
+  },
+  {
+    id: "animeflv",
+    label: "AnimeFLV",
+    domains: ["animeflv.net", "www.animeflv.net"],
+    service: animeflvService,
+  },
+  {
+    id: "animeav1",
+    label: "AnimeAV1",
+    domains: ["animeav1.com", "www.animeav1.com"],
+    service: animeav1Service,
+  },
+  {
+    id: "tioanime",
+    label: "TioAnime",
+    domains: ["tioanime.com", "www.tioanime.com"],
+    service: tioanimeService,
+  },
+  {
+    id: "hentaila",
+    label: "Hentaila",
+    domains: ["hentaila.com", "www.hentaila.com"],
+    service: hentailaService,
+  },
+  {
+    id: "monoschinos",
+    label: "MonosChinos",
+    domains: ["monoschinos2.com", "www.monoschinos2.com"],
+    service: monoschinosService,
+  },
+  {
+    id: "animeyt",
+    label: "AnimeYT",
+    domains: ["animeyt.es", "www.animeyt.es"],
+    service: animeytService,
   }
 ];
 
@@ -104,7 +140,11 @@ async function searchAnime(query, domainCandidate) {
   // Búsqueda unificada en paralelo en todos los proveedores
   const searchPromises = PROVIDERS.map(async (provider) => {
     try {
-      const result = await provider.service.searchAnime(query, provider.domains[0]);
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout de proveedor")), 8000));
+      const result = await Promise.race([
+        provider.service.searchAnime(query, provider.domains[0]),
+        timeoutPromise
+      ]);
       const results = result?.data?.results || [];
       results.forEach(item => {
         item.provider = provider.label;

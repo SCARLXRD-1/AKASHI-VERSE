@@ -9,6 +9,7 @@ const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 
 const contentRoutes = require("./routes/content.routes");
+const tvRoutes = require("./routes/tv.routes");
 const downloadService = require("./services/download.service");
 const { ApiError } = require("./utils/api-error");
 
@@ -142,10 +143,15 @@ app.get("/health", async (_req, res) => {
 
 app.use("/api/v1/content", contentRoutes);
 app.use("/api/pelisplus", contentRoutes);
+app.use("/api/v1/tv", tvRoutes);
 
 // 404
 app.use((_req, _res, next) => {
   next(new ApiError(404, "Endpoint no encontrado"));
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // Error handler

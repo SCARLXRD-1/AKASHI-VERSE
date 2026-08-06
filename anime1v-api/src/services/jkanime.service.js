@@ -24,6 +24,9 @@ async function fetchHtmlWithHeaders(url) {
     });
     return { html: response.data, headers: response.headers };
   } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return { html: "", headers: {} };
+    }
     throw new ApiError(500, "No se pudo obtener contenido desde JKAnime", error.message);
   }
 }
@@ -430,15 +433,23 @@ function parseAnimeInfoFromHtml(html, domain) {
   });
 
   const seasons = [];
-  // JKAnime groups related animes (Precuela, Secuela, etc) under a widget
-  $(".anime__details__widget a").each((_, element) => {
+  // JKAnime groups related animes (Precuela, Secuela, etc) under a widget or aninfo tab
+  $(".anime__details__widget a, .aninfo a").each((_, element) => {
     const link = $(element).attr("href");
-    const name = $(element).text().replace("(Serie)", "").replace("(Pelicula)", "").trim();
+    const name = $(element).text().replace("(Serie)", "").replace("(Pelicula)", "").replace("(OVA)", "").trim();
+    
+    // Ignore non-anime links like user profiles or empty anchors
+    if (!link || link === "#" || link.includes("/usuario/")) return;
+
     if (link && name) {
       try {
         const parsed = new URL(resolveAbsoluteUrl(link, domain));
         const relatedSlug = parsed.pathname.split("/").filter(Boolean)[0] || null;
+        // Don't add if it is just jkanime.net (no slug)
         if (relatedSlug) {
+          // Check if already in seasons
+          if (seasons.some((s) => s.id === relatedSlug)) return;
+          
           seasons.push({
             id: relatedSlug,
             title: name,
@@ -685,6 +696,9 @@ async function getAnimeInfo(urlCandidate) {
       trailer: null,
       genres: info.infoValues.genres || [],
       episodes,
+      seasons: info.seasons || [],
+      slug,
+      url,
     },
     source: "jkanime",
   };

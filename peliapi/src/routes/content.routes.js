@@ -448,7 +448,8 @@ router.get(
         );
       } else if (provider === "pelisplus") {
         cascadeProviders.push(
-          { name: "poseidon", fn: () => poseidonService.getEpisodeServers(slug, season, episode) },
+          { name: "seriesflix", fn: () => seriesflixService.getEpisodeServersByTitle(title, season, episode) },
+          { name: "poseidon", fn: () => poseidonService.getEpisodeServersByTitle(title, season, episode) },
           { name: "repelishd", fn: () => repelishdService.getEpisodeServers(slug, season, episode) },
           { name: "cuevana3", fn: () => findCuevanaEpisodeServers(title, season, episode, slug) },
         );
@@ -464,7 +465,8 @@ router.get(
       for (const fallback of cascadeProviders) {
         try {
           console.log(`[servers cascade] Trying ${fallback.name}...`);
-          const result = await fallback.fn();
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout en cascade")), 10000));
+          const result = await Promise.race([fallback.fn(), timeoutPromise]);
           if (result && Array.isArray(result.servers) && result.servers.length > 0) {
             data = result;
             source = fallback.name;
@@ -486,11 +488,15 @@ router.get(
     // original ya no publica enlaces. Busca en SeriesFlix, PoseidonHD, Cuevana y AnimeYT
     // antes de responder una lista vacía.
     if (!Array.isArray(data?.servers) || data.servers.length === 0) {
-      const [sfData, poseidonData, cuevanaData, animeytData] = await Promise.all([
-        seriesflixService.getEpisodeServersByTitle(title, season, episode).catch(() => null),
-        poseidonService.getEpisodeServersByTitle(title, season, episode).catch(() => null),
-        findCuevanaEpisodeServers(title, season, episode, slug).catch(() => null),
-        title ? animeytService.getEpisodeServersByTitle(title, season, episode).catch(() => null) : Promise.resolve(null),
+      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve([null, null, null, null]), 12000));
+      const [sfData, poseidonData, cuevanaData, animeytData] = await Promise.race([
+        Promise.all([
+          seriesflixService.getEpisodeServersByTitle(title, season, episode).catch(() => null),
+          poseidonService.getEpisodeServersByTitle(title, season, episode).catch(() => null),
+          findCuevanaEpisodeServers(title, season, episode, slug).catch(() => null),
+          title ? animeytService.getEpisodeServersByTitle(title, season, episode).catch(() => null) : Promise.resolve(null),
+        ]),
+        timeoutPromise
       ]);
       if (sfData && Array.isArray(sfData.servers) && sfData.servers.length > 0) {
         data = sfData;

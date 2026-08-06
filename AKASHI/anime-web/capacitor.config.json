@@ -1,8 +1,0 @@
-{
-  "appId": "com.akashi.animeweb",
-  "appName": "Zenkai Anime",
-  "webDir": "dist",
-  "server": {
-    "cleartext": true
-  }
-}
