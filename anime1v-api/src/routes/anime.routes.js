@@ -107,8 +107,10 @@ router.get(
       service = require("../services/animeav1.service");
     }
 
+    const isRecent = req.query.recent === 'true';
+
     const response = service.getCatalog
-      ? await service.getCatalog(req.query.page, req.query.type || req.query.genre)
+      ? await service.getCatalog(req.query.page, req.query.type || req.query.genre, isRecent)
       : await service.searchAnime("");
     
     if (response && response.data && Array.isArray(response.data.results)) {

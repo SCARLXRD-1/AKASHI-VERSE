@@ -345,10 +345,12 @@ function parseServers($) {
          if (paneId.includes("lat")) lang = "Latino";
          else if (paneId.includes("cast")) lang = "Castellano";
       } else {
-         // Fallback al título de la sección si existe
+         // Fallback a "Automático" cuando no hay un tab claro de idioma
          const fallbackLang = $(".divseason").text().trim();
-         if (fallbackLang) {
+         if (fallbackLang && (fallbackLang.toLowerCase() === 'latino' || fallbackLang.toLowerCase() === 'subtitulado' || fallbackLang.toLowerCase() === 'castellano')) {
              lang = fallbackLang;
+         } else {
+             lang = "Automático";
          }
       }
 

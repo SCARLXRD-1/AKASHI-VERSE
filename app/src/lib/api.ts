@@ -165,9 +165,9 @@ export const peliApi = {
 
 export const animeApi = {
   // El backend no expone un endpoint separado de "episodios recientes".
-  // Usamos la primera página del catálogo como contenido reciente/destacado.
+  // Usamos el parametro recent=true para obtener los episodios recientes de la portada.
   recentEpisodes: async (): Promise<MediaItem[]> => {
-    return animeApi.catalog(1)
+    return animeApi.catalog(1, undefined, undefined, true)
   },
   search: async (q: string): Promise<MediaItem[]> => {
     const payload = await getJson(
@@ -178,10 +178,11 @@ export const animeApi = {
       .map(normalizeAnimeItem)
       .filter((x): x is MediaItem => Boolean(x))
   },
-  catalog: async (page = 1, genre?: string, provider?: string): Promise<MediaItem[]> => {
+  catalog: async (page = 1, genre?: string, provider?: string, recent?: boolean): Promise<MediaItem[]> => {
     const qs = new URLSearchParams({ page: String(page) })
     if (genre) qs.set('type', genre) // map genre to type
     if (provider) qs.set('provider', provider)
+    if (recent) qs.set('recent', 'true')
     const payload = await getJson(
       `${config.animeApiUrl}/api/v1/anime/catalog?${qs.toString()}`,
       { 'X-API-Key': config.animeApiKey },

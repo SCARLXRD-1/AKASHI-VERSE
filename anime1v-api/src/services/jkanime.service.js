@@ -796,15 +796,15 @@ async function getEpisodeLinks(urlCandidate, includeMegaRaw, excludeServersRaw) 
   };
 }
 
-// Fetch catalog by parsing the homepage recent animes
-async function getCatalog(page = 1, genre = "") {
+// Fetch catalog by parsing the homepage recent animes or directory
+async function getCatalog(page = 1, genre = "", isRecent = false) {
   try {
     const pageNum = Number(page) || 1;
     let html;
     let results = [];
     
-    // Page 1 gets recent updates from home, Page > 1 gets the directory
-    if (pageNum === 1 && !genre) {
+    // Si isRecent es true, obtenemos los episodios recientes de la portada
+    if (isRecent) {
       html = await fetchHtml("https://jkanime.net/");
       const $ = cheerio.load(html);
       const seen = new Set();
