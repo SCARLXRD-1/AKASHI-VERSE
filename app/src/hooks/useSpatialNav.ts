@@ -97,6 +97,7 @@ export function useSpatialNav(containerRef: React.RefObject<HTMLElement | null>,
       } else if (key === 'Enter' || key === ' ') {
         const el = document.activeElement as HTMLElement | null
         if (el && el.dataset.nav && el.tagName !== 'INPUT') {
+          e.preventDefault()
           el.click()
         }
       }
