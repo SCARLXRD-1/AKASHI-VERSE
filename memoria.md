@@ -128,3 +128,20 @@ El nuevo proveedor **Unlimplay** ha sido integrado a `peliapi`.
 - **Reproductor de Video (Bucle de Carga):** Revisar por qué el reproductor nativo se queda en un bucle infinito (cargando constantemente) al reproducir películas/series/animes que sí tienen servidores válidos disponibles.
 - **Servidores de Anime:** Investigar la causa de los errores "Error al cargar los servidores" en animes específicos (ej. Dandelion) para determinar si es un problema del endpoint, del mapeo o de que el proveedor realmente no tiene el contenido.
 - **Bloqueos de Extracción (Películas/Series):** Se registran mensajes como "El proveedor bloqueó la extracción" (ej. en *Reflejo de Ti* o *El cielo te está esperando*). Esto ocurre porque servicios como DoodStream, SBFast o Mystream detectan la IP del servidor (Render) y bloquean el scraping (403 Forbidden). Habrá que mejorar los `resolvers` o implementar una caída (fallback) que abra el `embedUrl` directo si falla la extracción del MP4 nativo.
+
+## Actualizaciones Recientes (Agosto 2026)
+
+### 1. Correcciones de Bugs (TypeScript y Lógica)
+- **Pantalla de Inicio (Episodios Recientes):** Se corrigió la consulta en la pantalla principal para que llame a `animeApi.recentEpisodes()` y navegue directamente al reproductor del episodio recién salido, separándolo de la lógica general del catálogo de anime.
+- **Errores de Tipado en Favoritos:** Se arreglaron errores de TypeScript al pasar `urlParams` y `rank` de forma innecesaria al componente `MediaCard`. Se estandarizó la interfaz `HistoryEntry` en el hook `useFavorites.ts` para mantener coherencia en las firmas de tipos.
+- **Filtros del Catálogo:** Se corrigió el uso de `matchesAnimeCategory(item, animeType, false)` en `Catalog.tsx`, pasando los tres parámetros requeridos por la firma.
+
+### 2. Soporte y Optimización para Smart TV
+- **Android Manifest (Leanback):** Se inyectaron configuraciones en `AndroidManifest.xml` (`android.software.leanback`, `LEANBACK_LAUNCHER`, `touchscreen required="false"`) para que el APK generado sea 100% compatible y nativo en Android TV.
+- **Navegación con Control Remoto (D-Pad):** Se actualizó el hook `useSpatialNav.ts` añadiendo `e.preventDefault()` en la tecla "Enter" para evitar que el navegador envíe clics dobles al invocar `.click()` de forma programática.
+- **Estilos Visuales de TV:** Se añadió una clase CSS global para `[data-focus="true"]` en `index.css`, proveyendo de un contorno brillante (outline), transformaciones de escala y sobras (box-shadow) que aseguran que el usuario de TV jamás pierda de vista el elemento seleccionado por su control remoto.
+
+### 3. Rediseño y Despliegue de APK Nativos
+- **Rediseño de la sección Apps:** La pantalla `Apps.tsx` pasó de ser un texto básico a una **Landing Page Premium** empleando fondos radiales, diseño Glassmorphism, y micro-animaciones en tarjetas. Ahora muestra claramente los beneficios de las versiones Móvil y TV de AkashiVerse.
+- **Descargas Directas (Forzadas):** Se añadió el atributo HTML `download` a las anclas de descarga, asegurando que las rutas de los instaladores no sean interceptadas por el enrutamiento de la SPA.
+- **Compilación de APK Local con Java 17:** Se resolvieron incompatibilidades (Java `invalid source release: 21`) entre Capacitor 8 y el JDK del sistema mediante la modificación de las directivas `sourceCompatibility JavaVersion.VERSION_17` en los distintos archivos `build.gradle` (core, app, plugins), lo que permitió la correcta compilación mediante `gradlew assembleDebug`.

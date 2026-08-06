@@ -59,6 +59,7 @@ export default function TopBar() {
   }, [])
 
   const isNativeApp = typeof window !== 'undefined' && Capacitor.isNativePlatform()
+  const isMobileNative = isNativeApp && typeof window !== 'undefined' && window.innerWidth < 1024
 
   const navLinks = [
     { to: '/', label: 'Inicio' },
@@ -73,7 +74,7 @@ export default function TopBar() {
 
 
   return (
-    <header className="topbar">
+    <header className="topbar" style={isMobileNative ? { paddingTop: 'max(env(safe-area-inset-top), 36px)' } : undefined}>
       {/* Logo */}
       <a href="/" className="brand">
         <img src="/logo.png" alt="AkashiVerse" className="logo" />
