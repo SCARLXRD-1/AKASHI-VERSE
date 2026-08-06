@@ -122,8 +122,8 @@ export default function Catalog({ kind }: CatalogProps) {
         : peliApi.catalog({ type: typeParam, page: 2 })
       const [recent, more] = await Promise.all([firstPage, secondPage])
       if (!mounted) return
-      const filteredRecent = isAnime ? recent.filter((item) => matchesAnimeCategory(item, animeType)) : recent
-      const filteredMore = isAnime ? more.filter((item) => matchesAnimeCategory(item, animeType)) : more
+      const filteredRecent = isAnime ? recent.filter((item) => matchesAnimeCategory(item, animeType, false)) : recent
+      const filteredMore = isAnime ? more.filter((item) => matchesAnimeCategory(item, animeType, false)) : more
       const poolMap = new Map()
       for (const item of [...filteredRecent, ...filteredMore]) {
         if (item.url && !poolMap.has(item.url)) poolMap.set(item.url, item)

@@ -28,7 +28,6 @@ export default function Favorites() {
         ) : (
           <div className="row mode1 row-cols-md-4 row-cols-2 row-cols-lg-6">
             {favorites.map((fav) => {
-              const urlParams = new URLSearchParams(fav.watchUrl ? fav.watchUrl.split('?')[1] || '' : '')
               const kind = fav.kind
               
               const item = {
@@ -43,7 +42,7 @@ export default function Favorites() {
 
               return (
                 <div key={fav.id} style={{ position: 'relative' }}>
-                  <MediaCard item={item} rank={0} />
+                  <MediaCard item={item} />
                   <button
                     className="btn focusable"
                     onClick={() => toggle(fav)}
