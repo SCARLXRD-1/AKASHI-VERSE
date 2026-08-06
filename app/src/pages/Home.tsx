@@ -31,7 +31,7 @@ const SECTIONS: Section[] = [
     key: 'anime',
     title: 'Últimos Capítulos de Anime',
     kind: 'anime',
-    load: () => animeApi.catalog(1),
+    load: () => animeApi.recentEpisodes(),
   },
   {
     key: 'isekai',

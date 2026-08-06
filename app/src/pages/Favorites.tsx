@@ -7,7 +7,7 @@ import MediaCard from '../components/MediaCard'
 export default function Favorites() {
   const ref = useRef<HTMLDivElement>(null)
   useSpatialNav(ref)
-  const { favorites, remove } = useFavorites()
+  const { favorites, toggle } = useFavorites()
 
   return (
     <div className="main" ref={ref}>
@@ -28,9 +28,8 @@ export default function Favorites() {
         ) : (
           <div className="row mode1 row-cols-md-4 row-cols-2 row-cols-lg-6">
             {favorites.map((fav) => {
-              const urlParams = new URLSearchParams(fav.url.split('?')[1] || '')
-              const isAnime = fav.url.includes('anime')
-              const kind = urlParams.get('kind') || (isAnime ? 'anime' : 'movie')
+              const urlParams = new URLSearchParams(fav.watchUrl ? fav.watchUrl.split('?')[1] || '' : '')
+              const kind = fav.kind
               
               const item = {
                 title: fav.title,
@@ -39,7 +38,7 @@ export default function Favorites() {
                 url: fav.id, // For anime, id is the url
                 slug: fav.id, // For movies/series, id is the slug
                 kind,
-                provider: isAnime ? 'jkanime' : 'pelisplus'
+                provider: fav.provider || (fav.kind === 'anime' ? 'jkanime' : 'pelisplus')
               }
 
               return (
@@ -47,7 +46,7 @@ export default function Favorites() {
                   <MediaCard item={item} rank={0} />
                   <button
                     className="btn focusable"
-                    onClick={() => remove(fav.id)}
+                    onClick={() => toggle(fav)}
                     aria-label="Quitar de favoritos"
                     title="Quitar de favoritos"
                     style={{

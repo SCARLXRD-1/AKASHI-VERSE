@@ -162,7 +162,9 @@ export default function Detail() {
               className={`btn ${isFav ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => toggleFav({
                 id: slug,
-                url: `/detalle?kind=${tipo}&slug=${slug}&tipo=${tipo}&titulo=${encodeURIComponent(info.title)}&poster=${encodeURIComponent(info.poster || '')}`,
+                kind: isSerie ? 'series' : 'movie',
+                provider: 'pelisplus',
+                watchUrl: `/detalle?kind=${tipo}&slug=${slug}&tipo=${tipo}&titulo=${encodeURIComponent(info.title)}&poster=${encodeURIComponent(info.poster || '')}`,
                 title: info.title,
                 poster: info.poster,
                 duration: 0,

@@ -219,7 +219,9 @@ export default function AnimeDetail() {
               className={`btn ${isFav ? 'btn-primary' : 'btn-outline'}`}
               onClick={() => toggleFav({
                 id: url,
-                url: `/anime-detalle?url=${encodeURIComponent(url)}&titulo=${encodeURIComponent(info.title)}&poster=${encodeURIComponent(info.image || '')}`,
+                kind: 'anime',
+                provider: 'jkanime',
+                watchUrl: `/anime-detalle?url=${encodeURIComponent(url)}&titulo=${encodeURIComponent(info.title)}&poster=${encodeURIComponent(info.image || '')}`,
                 title: info.title,
                 poster: info.image,
                 duration: 0,
