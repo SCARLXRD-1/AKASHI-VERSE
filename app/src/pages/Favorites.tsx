@@ -26,7 +26,7 @@ export default function Favorites() {
             </div>
           </div>
         ) : (
-          <div className="row mode1 row-cols-md-4 row-cols-2 row-cols-lg-6">
+          <div className="grid">
             {favorites.map((fav) => {
               const kind = fav.kind
               
