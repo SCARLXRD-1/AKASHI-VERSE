@@ -55,6 +55,7 @@ export default function Apps() {
           </p>
           <a 
             href="/downloads/akashiverse-mobile.apk" 
+            download="akashiverse-mobile.apk"
             className="btn btn-primary" 
             style={{ width: '100%', padding: '16px 0', fontSize: '1.1rem', borderRadius: 999, display: 'flex', justifyContent: 'center', gap: 10, textDecoration: 'none' }}
           >
@@ -95,6 +96,7 @@ export default function Apps() {
           </p>
           <a 
             href="/downloads/akashiverse-tv.apk" 
+            download="akashiverse-tv.apk"
             className="btn btn-outline" 
             style={{ width: '100%', padding: '16px 0', fontSize: '1.1rem', borderRadius: 999, display: 'flex', justifyContent: 'center', gap: 10, textDecoration: 'none' }}
           >
