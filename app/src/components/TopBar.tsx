@@ -69,9 +69,7 @@ export default function TopBar() {
     { to: '/historial', label: 'Historial' },
   ]
 
-  if (!isNativeApp) {
-    navLinks.push({ to: '/apps', label: 'Descargar App' })
-  }
+
 
   return (
     <header className="topbar">

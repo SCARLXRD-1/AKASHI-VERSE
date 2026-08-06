@@ -314,6 +314,41 @@ function parseSearchResultsFromHtml(html, domain) {
   const $ = cheerio.load(html);
   const results = [];
 
+  // Intenta parsear la variable "animes" del nuevo diseño
+  const scriptMatch = html.match(/var animes\s*=\s*(\{.*?\});/);
+  if (scriptMatch && scriptMatch[1]) {
+    try {
+      const animesData = JSON.parse(scriptMatch[1]);
+      if (animesData && Array.isArray(animesData.data)) {
+        for (const item of animesData.data) {
+          const lowerTitle = (item.title || "").toLowerCase();
+          const lowerSlug = (item.slug || "").toLowerCase();
+          
+          if (
+            lowerTitle.includes('latino') || 
+            lowerTitle.includes('castellano') || 
+            lowerSlug.includes('-latino') || 
+            lowerSlug.includes('-audio-latino') ||
+            lowerSlug.includes('-castellano')
+          ) {
+            continue;
+          }
+
+          results.push({
+            id: item.slug,
+            title: item.title,
+            image: item.image,
+            url: item.url || `https://${domain}/${item.slug}/`,
+            type: item.tipo || item.type || "Anime",
+          });
+        }
+        return results;
+      }
+    } catch (e) {
+      console.error("[JKAnime] Error parsing animes JSON", e.message);
+    }
+  }
+
   $(".anime__item").each((_, element) => {
     const card = $(element);
     const title = card.find(".anime__item__text h5 a").first().text().trim();
@@ -846,7 +881,26 @@ async function getCatalog(page = 1, genre = "", isRecent = false) {
       });
     } else {
       // Pages 2+ or genre queries use the directory
-      const targetUrl = genre ? `https://jkanime.net/directorio/${pageNum}/?genero=${genre}` : `https://jkanime.net/directorio/${pageNum}/`;
+      let targetUrl = "https://jkanime.net/directorio/";
+      const queryParams = new URLSearchParams();
+      
+      if (pageNum > 1) queryParams.set("p", pageNum.toString());
+      
+      if (genre === 'donghua') {
+        queryParams.set("categoria", "donghua");
+      } else if (genre === 'ova' || genre === 'ovas') {
+        queryParams.set("tipo", "ovas");
+      } else if (genre === 'pelicula' || genre === 'peliculas') {
+        queryParams.set("tipo", "peliculas");
+      } else if (genre === 'especial' || genre === 'especiales') {
+        queryParams.set("tipo", "especiales");
+      } else if (genre) {
+        queryParams.set("genero", genre);
+      }
+      
+      const qs = queryParams.toString();
+      targetUrl = qs ? `${targetUrl}?${qs}` : targetUrl;
+      
       html = await fetchHtml(targetUrl);
       results = parseSearchResultsFromHtml(html, "jkanime.net");
     }
