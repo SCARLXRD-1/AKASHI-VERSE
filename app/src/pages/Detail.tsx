@@ -5,6 +5,7 @@ import { useSpatialNav } from '../hooks/useSpatialNav'
 import { normalizeSeasons } from '../lib/seasons'
 import type { ContentInfo } from '../types'
 import Recommendations from '../components/Recommendations'
+import { useFavorites } from '../hooks/useFavorites'
 
 interface EpisodeItem {
   episode: number
@@ -42,6 +43,9 @@ export default function Detail() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeSeason, setActiveSeason] = useState(1)
+
+  const { toggle: toggleFav, checkIsFavorite } = useFavorites()
+  const isFav = checkIsFavorite(slug)
 
   useSpatialNav(ref)
 
@@ -150,9 +154,29 @@ export default function Detail() {
             {info.genres?.slice(0, 4).map((g) => g && <span key={g} className="chip">{g}</span>)}
           </div>
           {info.synopsis && <p className="detail-synopsis">{info.synopsis}</p>}
-          <div className="cta-row">
+          <div className="cta-row" style={{ display: 'flex', gap: 10 }}>
             <button className="btn btn-primary" data-nav onClick={() => window.location.assign(playUrl)}>
               ▶ {isSerie ? 'Reproducir' : 'Reproducir'}
+            </button>
+            <button
+              className={`btn ${isFav ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => toggleFav({
+                id: slug,
+                url: `/detalle?kind=${tipo}&slug=${slug}&tipo=${tipo}&titulo=${encodeURIComponent(info.title)}&poster=${encodeURIComponent(info.poster || '')}`,
+                title: info.title,
+                poster: info.poster,
+                duration: 0,
+                progress: 0,
+                timestamp: Date.now()
+              })}
+              data-nav
+              style={{
+                background: isFav ? 'var(--accent)' : 'transparent',
+                borderColor: 'var(--accent)',
+                color: isFav ? 'black' : 'var(--accent)'
+              }}
+            >
+              {isFav ? '❤️ Guardado' : '🤍 Guardar'}
             </button>
           </div>
         </div>

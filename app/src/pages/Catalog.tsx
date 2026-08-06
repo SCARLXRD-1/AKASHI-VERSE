@@ -7,13 +7,12 @@ interface CatalogProps {
   kind: 'peliculas' | 'series' | 'anime'
 }
 
-function matchesAnimeCategory(item: MediaItem, category: 'anime' | 'donghua' | 'ova'): boolean {
+function matchesAnimeCategory(item: MediaItem, category: 'anime' | 'donghua' | 'ova', isSearch: boolean): boolean {
+  if (!isSearch) return true // El backend ya filtró por categoría en el catálogo.
+
   const type = (item.type || '').toLocaleLowerCase()
-  if (category === 'donghua') return type.includes('donghua')
-  if (category === 'ova') return type.includes('ova')
-  // La API puede omitir el tipo en algunos proveedores o usar "Serie"/"Pelicula".
-  // Para la pestaña "anime", excluimos explícitamente "donghua".
-  // Permitimos "serie", "pelicula", "movie", etc., ya que JKAnime y otros las usan para anime japonés.
+  if (category === 'donghua') return type.includes('donghua') || type.includes('chinese') // Es difícil filtrar por donghua en búsqueda sin metadata.
+  if (category === 'ova') return type.includes('ova') || type.includes('special')
   if (category === 'anime') return !type.includes('donghua')
   return true
 }
@@ -97,7 +96,7 @@ export default function Catalog({ kind }: CatalogProps) {
 
     fetchContent()
       .then((r) => {
-        const filtered = isAnime ? r.filter((item) => matchesAnimeCategory(item, animeType)) : r
+        const filtered = isAnime ? r.filter((item) => matchesAnimeCategory(item, animeType, !!debouncedQuery.trim())) : r
         if (mounted) setItems((prev) => {
           if (page === 1) return filtered
           const newItems = filtered.filter(f => !prev.some(p => (p.url === f.url || p.title === f.title)))

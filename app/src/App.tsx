@@ -10,6 +10,7 @@ const Detail = lazy(() => import('./pages/Detail'))
 const AnimeDetail = lazy(() => import('./pages/AnimeDetail'))
 const Watch = lazy(() => import('./pages/Watch'))
 const History = lazy(() => import('./pages/History'))
+const Favorites = lazy(() => import('./pages/Favorites'))
 const LiveTv = lazy(() => import('./pages/LiveTv'))
 const Apps = lazy(() => import('./pages/Apps'))
 
@@ -68,6 +69,7 @@ function Layout() {
           <Route path="/anime-detalle" element={<SuspenseRoute><AnimeDetail /></SuspenseRoute>} />
           <Route path="/ver" element={<SuspenseRoute><Watch /></SuspenseRoute>} />
           <Route path="/historial" element={<SuspenseRoute><History /></SuspenseRoute>} />
+          <Route path="/favoritos" element={<SuspenseRoute><Favorites /></SuspenseRoute>} />
           <Route path="/tv" element={<SuspenseRoute><LiveTv /></SuspenseRoute>} />
           <Route path="/apps" element={<SuspenseRoute><Apps /></SuspenseRoute>} />
           <Route path="*" element={<Home />} />

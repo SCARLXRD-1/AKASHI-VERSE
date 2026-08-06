@@ -4,6 +4,7 @@ import { animeApi, imageProxy } from '../lib/api'
 import { useSpatialNav } from '../hooks/useSpatialNav'
 import type { RelatedEntry } from '../lib/seasons'
 import Recommendations from '../components/Recommendations'
+import { useFavorites } from '../hooks/useFavorites'
 
 interface AnimeEpisode {
   number: number
@@ -76,6 +77,9 @@ export default function AnimeDetail() {
   const [info, setInfo] = useState<AnimeInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const { toggle: toggleFav, checkIsFavorite } = useFavorites()
+  const isFav = checkIsFavorite(url)
 
   useSpatialNav(ref)
 
@@ -207,9 +211,29 @@ export default function AnimeDetail() {
             {info.genres?.slice(0, 4).map((g) => g && <span key={g.name} className="chip">{g.name}</span>)}
           </div>
           {info.description && <p className="detail-synopsis">{info.description}</p>}
-          <div className="cta-row">
+          <div className="cta-row" style={{ display: 'flex', gap: 10 }}>
             <button className="btn btn-primary" data-nav onClick={() => info.episodes[0] && goEpisode(0)}>
               ▶ Reproducir primer capítulo
+            </button>
+            <button
+              className={`btn ${isFav ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => toggleFav({
+                id: url,
+                url: `/anime-detalle?url=${encodeURIComponent(url)}&titulo=${encodeURIComponent(info.title)}&poster=${encodeURIComponent(info.image || '')}`,
+                title: info.title,
+                poster: info.image,
+                duration: 0,
+                progress: 0,
+                timestamp: Date.now()
+              })}
+              data-nav
+              style={{
+                background: isFav ? 'var(--accent)' : 'transparent',
+                borderColor: 'var(--accent)',
+                color: isFav ? 'black' : 'var(--accent)'
+              }}
+            >
+              {isFav ? '❤️ Guardado' : '🤍 Guardar'}
             </button>
           </div>
         </div>

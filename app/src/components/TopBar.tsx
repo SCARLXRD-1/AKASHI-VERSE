@@ -66,6 +66,7 @@ export default function TopBar() {
     { to: '/series', label: 'Series' },
     { to: '/anime', label: 'Anime' },
     { to: '/tv', label: 'TV en vivo' },
+    { to: '/favoritos', label: 'Favoritos' },
     { to: '/historial', label: 'Historial' },
   ]
 
