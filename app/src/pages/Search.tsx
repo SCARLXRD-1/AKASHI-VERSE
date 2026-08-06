@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { animeApi, peliApi, type MediaItem } from '../lib/api'
 import MediaCard from '../components/MediaCard'
 import { useSpatialNav } from '../hooks/useSpatialNav'
+import SearchFilters from '../components/SearchFilters'
 
 export default function Search() {
   const [params] = useSearchParams()
@@ -34,13 +35,17 @@ export default function Search() {
       setLoading(true)
       setError(null)
 
-      const seen = new Set<string>()
-      const merged: MediaItem[] = []
+      const seen = new Map<string, MediaItem>()
+      
       const push = (item: MediaItem) => {
-        const key = `${item.kind}:${item.title.toLowerCase()}`
+        const key = item.title.toLowerCase()
         if (!seen.has(key)) {
-          seen.add(key)
-          merged.push(item)
+          seen.set(key, item)
+        } else {
+          // Si ya existe pero el nuevo es anime, sobreescribir (priorizamos animeApi sobre TMDB para animes)
+          if (item.kind === 'anime' && seen.get(key)?.kind !== 'anime') {
+            seen.set(key, item)
+          }
         }
       }
 
@@ -50,10 +55,8 @@ export default function Search() {
 
       Promise.allSettled(requests).then((results) => {
         if (!mounted) return
+        const merged = Array.from(seen.values())
         const typed = contentType === 'all' ? merged : merged.filter((item) => item.kind === contentType)
-        // El catálogo de los proveedores sí permite filtrar género. Las búsquedas por
-        // texto no incluyen metadatos de género, por lo que se consulta ese catálogo
-        // y se conserva únicamente la intersección por título.
         if (genre) {
           const genreRequest = contentType === 'all'
             ? Promise.all([peliApi.catalog({ genre }), animeApi.catalog(1, genre)]).then(([moviesAndSeries, anime]) => [...moviesAndSeries, ...anime])
@@ -99,33 +102,18 @@ export default function Search() {
         </div>
       </section>
 
-      <section className="search-filters" aria-label="Filtros de búsqueda">
-        <div>
-          <span className="kicker">Filtrar resultados</span>
-          <p>Género está disponible en los catálogos actuales. Año y actor no los exponen los proveedores conectados.</p>
-        </div>
-        <label>
-          <span>Tipo</span>
-          <select value={contentType} onChange={(e) => setContentType(e.target.value as typeof contentType)} data-nav>
-            <option value="all">Todo</option><option value="movie">Películas</option><option value="series">Series</option><option value="anime">Anime</option>
-          </select>
-        </label>
-        <label>
-          <span>Género</span>
-          <select value={genre} onChange={(e) => setGenre(e.target.value)} data-nav>
-            <option value="">Todos los géneros</option>
-            {genres.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
-          </select>
-        </label>
-        <label>
-          <span>Año</span>
-          <input value="No disponible" disabled aria-label="Filtro por año no disponible en los proveedores" />
-        </label>
-        <label>
-          <span>Actor</span>
-          <input value="No disponible" disabled aria-label="Filtro por actor no disponible en los proveedores" />
-        </label>
-      </section>
+      <SearchFilters
+        searchValue={q}
+        onSearchChange={() => {}}
+        onSearchSubmit={() => {}}
+        genre={genre}
+        onGenreChange={setGenre}
+        genres={genres.map(g => ({ value: g.slug, label: g.name }))}
+        contentType={contentType}
+        onContentTypeChange={setContentType}
+        loading={loading}
+        layout="horizontal"
+      />
 
       {loading && <div className="spinner" role="status" aria-label="Cargando" />}
 

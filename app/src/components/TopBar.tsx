@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { useSpatialNav } from '../hooks/useSpatialNav'
 
 export default function TopBar() {
   const navRef = useRef<HTMLElement>(null)
-  const [query, setQuery] = useState('')
-  const [searchFocused, setSearchFocused] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -13,13 +11,8 @@ export default function TopBar() {
     }
     return false
   })
-  const navigate = useNavigate()
 
   useSpatialNav(navRef, false)
-
-  useEffect(() => {
-    if (query.trim()) navigate(`/buscar?q=${encodeURIComponent(query.trim())}`, { replace: true })
-  }, [query, navigate])
 
   // Cerrar menú al hacer click fuera
   useEffect(() => {
@@ -64,11 +57,14 @@ export default function TopBar() {
     }
   }, [])
 
+  const isNativeApp = typeof window !== 'undefined' && !!(window as any).Capacitor
+
   const navLinks = [
     { to: '/', label: 'Inicio' },
     { to: '/peliculas', label: 'Películas' },
     { to: '/series', label: 'Series' },
     { to: '/anime', label: 'Anime' },
+    { to: '/tv', label: 'TV en vivo' },
     { to: '/historial', label: 'Historial' },
   ]
 
@@ -94,48 +90,56 @@ export default function TopBar() {
         ))}
       </nav>
 
-      {/* Search */}
-      <div className="search-box">
-        <span aria-hidden>⌕</span>
-        <input
-          type="search"
-          placeholder="Buscar…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-          aria-label="Buscar contenido"
-          aria-describedby="search-hint"
-          required
-        />
-        {searchFocused && query.trim() === '' && (
-          <div id="search-hint" className="search-error">Escribe algo para buscar</div>
-        )}
-      </div>
 
-      {/* Theme toggle */}
-      <button
-        className="theme-toggle focusable"
-        onClick={toggleTheme}
-        aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-        aria-pressed={isDark}
-        data-nav
-      >
-        <svg className="moon-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-        <svg className="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="23" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-          <line x1="1" y1="12" x2="3" y2="12" />
-          <line x1="21" y1="12" x2="23" y2="12" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </svg>
-      </button>
+
+      {/* Right actions */}
+      <div className="topbar-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center', justifySelf: 'end' }}>
+        {/* Descargar App Button - solo visible en web, no en app nativa */}
+        {!isNativeApp && (
+          <button className="btn btn-outline" style={{ padding: '8px 14px', fontSize: '0.9rem' }}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span className="hide-mobile">Descargar App</span>
+          </button>
+        )}
+
+        {/* Theme toggle */}
+        <button
+          className="theme-toggle focusable"
+          onClick={toggleTheme}
+          aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          aria-pressed={isDark}
+          data-nav
+        >
+          <svg className="moon-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+          <svg className="sun-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+        </button>
+      </div>
 
       {/* Hamburger (solo móvil) */}
       <button

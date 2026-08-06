@@ -123,7 +123,8 @@ export const peliApi = {
     if (url) qs.set('url', url)
     if (tmdbId) qs.set('tmdbId', String(tmdbId))
     const payload = await getJson(`${config.peliApiUrl}/api/v1/content/servers?${qs.toString()}`)
-    return (payload?.data ?? payload ?? {}) as Record<string, unknown>
+    const data = payload as Record<string, unknown>
+    return (data?.data ?? data ?? {}) as Record<string, unknown>
   },
   resolve: async (url: string, parentUrl?: string): Promise<string | undefined> => {
     const qs = new URLSearchParams({ url })
@@ -131,6 +132,10 @@ export const peliApi = {
     const payload = (await getJson(`${config.peliApiUrl}/api/v1/content/resolve?${qs.toString()}`)) as Record<string, unknown>
     const data = (payload?.data ?? {}) as Record<string, unknown>
     return (data?.directUrl as string) || undefined
+  },
+  liveChannels: async (): Promise<Array<{ id: string; name: string; category: string; type: string; url: string; logo: string }>> => {
+    const payload = (await getJson(`${config.peliApiUrl}/api/v1/tv/channels`)) as Record<string, unknown>
+    return (payload?.data as Array<any>) || []
   },
   preflight: async (payload: Record<string, unknown>): Promise<{ servers?: Array<{ name?: string; language?: string; quality?: string; embedUrl?: string; directUrl?: string; latencyMs?: number }>; checked?: number; working?: number } | undefined> => {
     try {

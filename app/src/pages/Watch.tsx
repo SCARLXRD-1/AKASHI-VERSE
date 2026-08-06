@@ -120,6 +120,20 @@ export default function Watch() {
   const [animeEpisodes, setAnimeEpisodes] = useState<Array<{ number?: number; url?: string; title?: string }>>([])
   const [serieSeasons, setSerieSeasons] = useState<any[]>([])
   const [selectedSeason, setSelectedSeason] = useState(season)
+  const [hybridAnimeMatch, setHybridAnimeMatch] = useState<{ url: string; title: string; image?: string } | null>(null)
+
+  useEffect(() => {
+    if (kind !== 'series' && kind !== 'serie') return
+    let mounted = true
+    animeApi.search(title).then((results) => {
+      if (!mounted) return
+      const match = results.find(r => r.title.toLowerCase().includes(title.toLowerCase().split(' season')[0]))
+      if (match && match.url) {
+        setHybridAnimeMatch({ url: match.url, title: match.title, image: match.image })
+      }
+    }).catch(console.error)
+    return () => { mounted = false }
+  }, [kind, title])
 
   const startAt = useMemo(() => {
     const t = Number(params.get('t') || 0)
@@ -604,7 +618,10 @@ export default function Watch() {
                             className={`btn ${s.originalIndex === serverIndex ? 'btn-primary shadow-lg ring-2 ring-[var(--color-primary)]' : 'btn-ghost'}`}
                             onClick={() => setServerIndex(s.originalIndex)}
                           >
-                            <span className="truncate">{s.name || s.server || 'Server ' + (s.originalIndex + 1)}</span>
+                            <span className="truncate">
+                              {s.name || s.server || 'Server ' + (s.originalIndex + 1)}
+                              {s.language && ` (${s.language})`}
+                            </span>
                           </button>
                         ))}
                       </div>
@@ -648,21 +665,40 @@ export default function Watch() {
         )}
 
         {/* Sidebar for Series */}
-        {(kind === 'series' || kind === 'serie') && serieSeasons.length > 0 && (
+        {(kind === 'series' || kind === 'serie') && (
           <div className="watch-sidebar">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0 }}>Episodios</h3>
-              {serieSeasons.length > 1 && (
-                <select 
-                  value={selectedSeason} 
-                  onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                  style={{ padding: '6px 12px', borderRadius: 8, background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--line)', cursor: 'pointer', outline: 'none' }}
+            {hybridAnimeMatch && (
+              <div style={{ marginBottom: 16, background: 'rgba(212, 175, 55, 0.1)', border: '1px solid var(--accent)', padding: 12, borderRadius: 8 }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: 'var(--accent)', fontWeight: 600 }}>🔥 ¡Versión Anime Disponible!</p>
+                <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', opacity: 0.9 }}>Parece que esta serie es un anime. Disfruta de todos los capítulos completos y subtitulados en JKAnime.</p>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    const qs = new URLSearchParams({ url: hybridAnimeMatch.url, titulo: hybridAnimeMatch.title })
+                    if (hybridAnimeMatch.image) qs.set('poster', hybridAnimeMatch.image)
+                    window.location.assign(`/anime-detalle?${qs.toString()}`)
+                  }}
                 >
-                  {serieSeasons.map(s => <option key={s.season} value={s.season}>T{s.season}</option>)}
-                </select>
-              )}
-            </div>
-            <div className="episode-scroll">
+                  Ver con Subtítulos
+                </button>
+              </div>
+            )}
+            
+            {serieSeasons.length > 0 && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h3 style={{ margin: 0 }}>Episodios</h3>
+                  {serieSeasons.length > 1 && (
+                    <select 
+                      value={selectedSeason} 
+                      onChange={(e) => setSelectedSeason(Number(e.target.value))}
+                      style={{ padding: '6px 12px', borderRadius: 8, background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--line)', cursor: 'pointer', outline: 'none' }}
+                    >
+                      {serieSeasons.map(s => <option key={s.season} value={s.season}>T{s.season}</option>)}
+                    </select>
+                  )}
+                </div>
+                <div className="episode-scroll">
               {serieSeasons.find(s => s.season === selectedSeason)?.episodes.map((ep: any) => {
                 // Usar ?? en lugar de || para no tratar ep 0 como falsy
                 const epObj = typeof ep === 'number' ? { number: ep, title: undefined, url: undefined } : { number: Number((ep as any).number ?? 0), title: (ep as any).title, url: (ep as any).url }
@@ -684,6 +720,8 @@ export default function Watch() {
                 )
               })}
             </div>
+            </>
+            )}
           </div>
         )}
 

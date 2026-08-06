@@ -5,11 +5,11 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 
 const Catalog = lazy(() => import('./pages/Catalog'))
-const Search = lazy(() => import('./pages/Search'))
 const Detail = lazy(() => import('./pages/Detail'))
 const AnimeDetail = lazy(() => import('./pages/AnimeDetail'))
 const Watch = lazy(() => import('./pages/Watch'))
 const History = lazy(() => import('./pages/History'))
+const LiveTv = lazy(() => import('./pages/LiveTv'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -33,11 +33,11 @@ function Layout() {
           <Route path="/peliculas" element={<SuspenseRoute><Catalog kind="peliculas" /></SuspenseRoute>} />
           <Route path="/series" element={<SuspenseRoute><Catalog kind="series" /></SuspenseRoute>} />
           <Route path="/anime" element={<SuspenseRoute><Catalog kind="anime" /></SuspenseRoute>} />
-          <Route path="/buscar" element={<SuspenseRoute><Search /></SuspenseRoute>} />
           <Route path="/detalle" element={<SuspenseRoute><Detail /></SuspenseRoute>} />
           <Route path="/anime-detalle" element={<SuspenseRoute><AnimeDetail /></SuspenseRoute>} />
           <Route path="/ver" element={<SuspenseRoute><Watch /></SuspenseRoute>} />
           <Route path="/historial" element={<SuspenseRoute><History /></SuspenseRoute>} />
+          <Route path="/tv" element={<SuspenseRoute><LiveTv /></SuspenseRoute>} />
           <Route path="*" element={<Home />} />
         </Routes>
       </main>

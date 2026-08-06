@@ -12,30 +12,56 @@ interface Section {
   load: () => Promise<MediaItem[]>
 }
 
+const getRandomPage = () => Math.floor(Math.random() * 5) + 1
+
 const SECTIONS: Section[] = [
   {
     key: 'movies',
-    title: 'Películas',
+    title: 'Top Últimas Películas',
     kind: 'movie',
     load: () => peliApi.catalog({ type: 'movie' }),
   },
   {
     key: 'series',
-    title: 'Series',
+    title: 'Top Últimas Series',
     kind: 'series',
     load: () => peliApi.catalog({ type: 'serie' }),
   },
   {
     key: 'anime',
-    title: 'Anime',
+    title: 'Últimos Capítulos de Anime',
     kind: 'anime',
     load: () => animeApi.catalog(1),
   },
   {
-    key: 'donghuas',
-    title: 'Donghuas',
+    key: 'isekai',
+    title: 'Animes Isekai',
     kind: 'anime',
-    load: () => animeApi.catalog(1, 'donghua', 'jkanime'),
+    load: () => animeApi.catalog(1, 'isekai', 'animeav1'),
+  },
+  {
+    key: 'rec-action',
+    title: 'Recomendaciones de Acción',
+    kind: 'movie',
+    load: () => peliApi.catalog({ type: 'movie', genre: 'accion', page: getRandomPage() }),
+  },
+  {
+    key: 'rec-drama',
+    title: 'Recomendaciones de Drama',
+    kind: 'movie',
+    load: () => peliApi.catalog({ type: 'movie', genre: 'drama', page: getRandomPage() }),
+  },
+  {
+    key: 'rec-horror',
+    title: 'Recomendaciones de Terror',
+    kind: 'movie',
+    load: () => peliApi.catalog({ type: 'movie', genre: 'terror', page: getRandomPage() }),
+  },
+  {
+    key: 'rec-thriller',
+    title: 'Recomendaciones de Suspenso',
+    kind: 'movie',
+    load: () => peliApi.catalog({ type: 'movie', genre: 'suspenso', page: getRandomPage() }),
   },
 ]
 
@@ -125,7 +151,7 @@ export default function Home() {
                 </Link>
               </div>
               <div className="grid">
-                {items.slice(0, 12).map((item, i) => (
+                {items.slice(0, s.key.match(/accion|drama|terror|suspenso/) ? 6 : 10).map((item, i) => (
                   <div key={`${s.key}-${item.title}-${i}`} className="rise rise-2">
                     <MediaCard item={item} />
                   </div>
